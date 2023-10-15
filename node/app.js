@@ -4,6 +4,7 @@ const cors = require('cors')
 const userRoute = require('./routes/user_route')
 const pizzaRoute = require('./routes/pizza_route')
 const adminRoute = require('./routes/admin_route')
+const authMiddleware = require('./middleware/auth')
 const mongoose = require('mongoose')
 
 app.use(cors())
@@ -18,11 +19,10 @@ mongoose.connect("mongodb://127.0.0.1:27017/node-backend", { useNewUrlParser: tr
     .catch((error) => {
         console.log(error)
     })
-
-
 app.use('/users', userRoute)
-app.use('/pizza', pizzaRoute)
-app.use('/admin', adminRoute)
+app.use(authMiddleware.authentication)
+app.use('/pizza', authMiddleware.authentication, pizzaRoute)
+app.use('/admin', authMiddleware.authentication, adminRoute)
 
 
 

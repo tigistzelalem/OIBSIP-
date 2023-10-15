@@ -8,15 +8,15 @@ export const ingredientApi = createApi({
     tagTypes: ["Ingredient"],
     baseQuery: fetchBaseQuery({
         baseUrl: BASE_URL,
-        // prepareHeaders: (headers) => {
-        //     const token = getCookie("token");
-        //     if (token) {
-        //         headers.set("authorization", `bearer ${token}`);
-        //     }
+        prepareHeaders: (headers) => {
+            const token = getCookie("token");
+            if (token) {
+                headers.set("authorization", `bearer ${token}`);
+            }
 
-        //     return headers;
+            return headers;
 
-        // }
+        }
     }),
     endpoints: (builder) => ({
         createIngredient: builder.mutation<any, any>({
@@ -46,13 +46,6 @@ export const ingredientApi = createApi({
             invalidatesTags: ["Ingredient"],
         }),
 
-        // updatePizza: builder.mutation<any, Partial<Ingredient>>({
-        //     query: (ingredient) => ({
-        //         url: `/pizza/updatePizza/${ingredient._id}`, // Replace with your update endpoint
-        //         method: 'PATCH',
-        //         body: ingredient,
-        //     }),
-        // }),
     }),
 });
 

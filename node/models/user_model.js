@@ -28,6 +28,15 @@ const UserSchema = new Schema({
         default: 'user'
 
     },
+    resetToken: {
+        type: String
+    },
+    resetTokenExpiration: {
+        type: Date
+    },
+    otpCode: {
+        type: Number
+    }
 })
 
 module.exports = mongoose.model('User', UserSchema);

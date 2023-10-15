@@ -136,10 +136,14 @@ const signin = async (req, res) => {
 const forgetPasswordEmail = async (req, res) => {
     const { email } = req.body;
     try {
-        const resetToken = crypto.randomBytes(32).toString('hex');
-        const resetTokenExpiration = Date.now() + 3600000;
+        // const oneHourMs = 60 * 60 * 1000;
+
+        // const resetToken = crypto.randomBytes(32).toString('hex');
+        // const resetTokenExpiration = Date.now() + oneHourMs;
 
         // Log the email you're searching for
+
+        const otpCode = Math.floor(100000 + Math.random() * 900000);
         console.log('Searching for user with email:', email);
 
         const user = await User.findOne({ email });
@@ -150,28 +154,33 @@ const forgetPasswordEmail = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        user.otpCode = otpCode;
         // Log the user's email and reset token
-        console.log('Found user with email:', user.email);
-        console.log('Generated reset token:', resetToken);
+        // console.log('Found user with email:', user.email);
+        // console.log('Generated reset token:', resetToken);
 
-        user.resetToken = resetToken;
-        user.resetTokenExpiration = resetTokenExpiration;
+        // user.resetToken = resetToken;
+        // user.resetTokenExpiration = resetTokenExpiration;
+
+        // console.log('User resetToken:', user.resetToken);
+        // console.log('Token from URL:', token);
 
         await user.save();
 
-        const resetLink = `http://localhost:5000/users/resetPassword?token=${resetToken}`;
+        // const resetLink = `http://localhost:5000/users/resetPassword?token=${encodeURIComponent(resetToken)} & email= ${ encodeURIComponent(email) }`;
+
 
         const mailOptions = {
             from: 'zelalemtigist21@gmail.com',
             to: email,
             subject: 'Reset your password',
-            text: `Click on the following link to reset your password: ${resetLink}`,
+            text: `Click on the following link to reset your password: ${otpCode}`,
         };
 
         const info = await transporter.sendMail(mailOptions);
         console.log('Email sent successfully', info.response);
 
-        res.status(200).json({ message: 'Reset password email sent successfully', resetToken });
+        res.status(200).json({ message: 'Reset password email sent successfully', otpCode });
     } catch (error) {
         console.error('Error in forgetPasswordEmail:', error);
         res.status(500).json({ message: error.message });
@@ -179,37 +188,44 @@ const forgetPasswordEmail = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-    const { email, password, token } = req.body
+    const { email, password, otpCode } = req.body;
+    console.log("##########")
+    console.log('email', email)
 
     try {
-        const user = await User.findOne({ email })
-
-        if (!user || user.resetToken !== token) {
-            return res.status(400).json({ message: 'Invalid reset token' })
-
+        const user = await User.findOne({ email });
+        console.log('user', user.resetToken)
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid reset token' });
         }
 
-        if (user.resetTokenExpiration < Date.now() + 3600000) {
-            res.status(400).json({ message: 'Reset token has expired' })
+        if (user.otpCode !== otpCode) {
+            return res.status(400).json({ message: 'Invalid OTP code' });
         }
+
+        // const oneHourMs = 60 * 60 * 1000;
+        // if (user.resetTokenExpiration < Date.now() + oneHourMs) {
+        //     return res.status(400).json({ message: 'Reset token has expired' });
+        // }
+        console.log("middle")
 
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt)
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-        user.password = hashedPassword
-        user.resetToken = null
-        user.resetTokenExpiration = null
+        user.password = hashedPassword;
+        user.resetToken = null;
+        user.resetTokenExpiration = null;
 
-        await user.save()
-
-        accessToken = jwt.sign({ userId: user.id }, jwt_secret)
-        res.status(200).json({ message: 'Password reset successufuly', accessToken })
+        await user.save();
+        console.log("after")
+        // const accessToken = jwt.sign({ userId: user.id }, jwt_secret);
+        res.status(200).json({ message: 'Password reset successfully' });
 
     } catch (error) {
-        res.status(500).json({ message: 'Internal server error' })
-
+        console.error('Error in resetPassword:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-}
+};
 
 module.exports = {
     signup,

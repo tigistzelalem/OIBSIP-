@@ -1,6 +1,7 @@
+import Modal from '@/common/Modal';
 import { useRegisterMutation } from '@/store/auth/auth-api';
+import { useRouter } from 'next/router';
 import React, { useState } from 'react';
-import { toast } from 'react-toastify';
 
 const initialState = {
     firstname: '',
@@ -13,6 +14,8 @@ const Register: React.FC = () => {
     const [formData, setFormData] = useState(initialState);
     const [errors, setErrors] = useState(initialState);
     const [createUser, { isLoading }] = useRegisterMutation()
+    const [isOpen, setIsOpen] = useState(false);
+    const router = useRouter();
 
 
     const [alreadyHasAccount, setAlreadyHasAccount] = useState(false);
@@ -62,6 +65,12 @@ const Register: React.FC = () => {
         }).unwrap();
         setFormData(initialState);
         setErrors(initialState);
+        setIsOpen(true);
+
+        setTimeout(() => {
+            setIsOpen(false); // Close the popup
+            router.push('/auth/login'); // Redirect to the login page
+        }, 5000);
 
     };
 
@@ -72,12 +81,22 @@ const Register: React.FC = () => {
                     Register
                 </h1>
                 {alreadyHasAccount ? (
-                    <p className="text-red-500 text-sm mb-4">
+                    <p className="text-gray-500 text-sm mb-4">
                         You already have an account. Please <a href="/login">login</a>.
                     </p>
                 ) : (
                     <form onSubmit={handleSubmit}>
-                        <div className="flex flex-col mb-4 ">
+                            <div className="flex flex-col mb-4 ">
+                                {isOpen && (
+                                    <Modal onClose={() => setIsOpen(false)}>
+                                        <div className='text-center my-auto'>
+                                            <h2>Registration Successful</h2>
+                                            <p>Pleas check your email for account verification mail.</p>
+                                        </div>
+
+                                    </Modal>
+                                )}
+                                
                             <label
                                     className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                                 htmlFor="firstname"
@@ -158,22 +177,24 @@ const Register: React.FC = () => {
                             )}
                         </div>
                         <button
-                            className="block bg-yellow-500 hover:bg-gray-600 text-white uppercase text-lg mx-auto p-2 rounded-full"
+                            className="block bg-yellow-500 hover:bg-gray-600 text-white uppercase text-lg mx-auto p-2 rounded-lg"
                             type="submit"
                         >
-                            {isLoading ? ("Loading") : ("CREATE ACCOUNT")}
+                            {isLoading ? ("Creating") : ("CREATE ACCOUNT")}
                     
                         </button>
                     </form>
                 )}
                 <a
-                    className="block w-full text-center no-underline mt-4 text-sm text-gray-700 hover:text-gray-900"
+                    className="block w-full text-center no-underline mt-4 text-sm text-gray-500"
                     href="/auth/login"
                 >
                     Already have an account?Login here
                 </a>
+              
 
             </div>
+           
         </div>
     );
 };

@@ -1,4 +1,6 @@
 type Order = {
+  amount: any;
+  currency: any;
   userId: string;
   pizzaId: string;
   ingredient: string[];

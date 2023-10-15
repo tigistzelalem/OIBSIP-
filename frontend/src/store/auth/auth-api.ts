@@ -8,15 +8,15 @@ export const userApi = createApi({
     tagTypes: ["User"],
     baseQuery: fetchBaseQuery({
         baseUrl: BASE_URL,
-        prepareHeaders: (headers) => {
-            const token = getCookie("token");
-            if (token) {
-                headers.set("authorization", `bearer ${token}`);
-            }
+        // prepareHeaders: (headers) => {
+        //     const token = getCookie("token");
+        //     if (token) {
+        //         headers.set("authorization", `bearer ${token}`);
+        //     }
 
-            return headers;
-            
-        }
+        //     return headers;
+
+        // }
 
     }),
     endpoints: (builder) => ({
@@ -28,7 +28,7 @@ export const userApi = createApi({
             }),
             invalidatesTags: ["User"],
         }),
-    
+
         register: builder.mutation<any, any>({
             query: (user) => ({
                 url: "/users/register",

@@ -2,12 +2,14 @@ import { useDeletePizzaMutation, useGetPizzaQuery } from '@/store/pizza/pizza-ap
 import { useRouter } from 'next/router';
 import React, { useState } from 'react'
 import IngredientDetail from '../ingredients/IngredientDetail';
-import { useCreateOrderMutation, useGetOrderQuery, useGetOrdersQuery } from '@/store/order/order-api';
-import { useCreatePaymentMutation } from '@/store/payment/payment-api';
+import { useCreateOrderMutation, useGetOrdersQuery } from '@/store/order/order-api';
 import Navbar from '../navbar/navbar';
 import { getCookie } from '@/utlis/cookie';
-import { useSelector } from 'react-redux';
 import Link from 'next/link';
+import { useCreatePaymentMutation } from '@/store/payment/payment-api';
+import Razorpay from 'razorpay';
+import OrdersList from '../mostOrder/getOrders';
+import Modal from '@/common/Modal';
 
 
 const PizzaDetail = () => {
@@ -15,15 +17,31 @@ const PizzaDetail = () => {
     const [deletePizza, setDeletePizza] = useDeletePizzaMutation();
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [selectedPizzaId, setSelectedPizzaId] = useState(null);
+    const [isOpen, setIsOpen] = useState(false);
+
+    const router = useRouter();
+    const { id } = router.query;
+    console.log('id  of pizza', id)
+    const userId = router.query.id && router.query.id.toString();
+
+    const [selectedIngredient, setSelectedIngredient] = useState<string[]>([])
+    const [quantity, setQuantity] = useState(1);
+    const { data: pizza, isLoading: pizzaLoading, isError, error } = useGetPizzaQuery(id as string);
+    const [createOrder, isLoading] = useCreateOrderMutation();
+    const [createRazopayPayment] = useCreatePaymentMutation();
+    const [orderId, setOrderId] = useState(null);
+
 
     const handleDelete = async (id: any) => {
+        console.log('id to be deleted', id)
         setConfirmDelete(true);
         setSelectedPizzaId(id);
     };
 
     const handleConfirmDelete = async () => {
         try {
-            await deletePizza(selectedPizzaId);
+            await deletePizza(pizza.pizza._id);
+            router.push('/pizza/pizzas')
         } catch (error) {
             alert(`An error occurred during delete: ${error}`);
         }
@@ -38,17 +56,6 @@ const PizzaDetail = () => {
     };
 
 
-    const router = useRouter();
-    const { id, orderId } = router.query;
-    const userId = router.query.id && router.query.id.toString();
-
-    const [selectedIngredient, setSelectedIngredient] = useState<string[]>([])
-    const [quantity, setQuantity] = useState(1);
-    const { data: pizza, isLoading: pizzaLoading, isError, error } = useGetPizzaQuery(id as string);
-    const [createOrder, isLoading] = useCreateOrderMutation();
-
-    const { data: order, isLoading: orderLoading, isError: orderError } = useGetOrderQuery(orderId as string)
-    const { data: orders, isLoading: ordersLoading, isError: ordersError } = useGetOrdersQuery();
 
     if (pizzaLoading || !pizza) {
         return <div>Loading...</div>
@@ -59,8 +66,11 @@ const PizzaDetail = () => {
     }
 
     const pizzaDetail = pizza.pizza
+    console.log('the image', pizzaDetail.image);
 
-    console.log('########', pizzaDetail._id)
+
+
+    // console.log('########', pizzaDetail._id)
 
     const handleSelection = (ingredientId: string) => {
         if (selectedIngredient.includes(ingredientId)) {
@@ -70,7 +80,6 @@ const PizzaDetail = () => {
         }
 
     }
-    console.log('selected: ', selectedIngredient)
 
     const handleSubmit = async () => {
 
@@ -82,9 +91,52 @@ const PizzaDetail = () => {
                 quantity: 1
             };
 
-            console.log(order, "this is the order")
             const response = await createOrder({ id: userId as string, order: order }).unwrap()
-            const orderId = response.orderId;
+            setIsOpen(true);
+            setTimeout(() => {
+                setIsOpen(false);
+            }, 5000);
+
+            const orderId = response.order._id;
+            const totalPrice = response.order.totalPrice
+            if (orderId) {
+                setOrderId(orderId);
+                const response = await createRazopayPayment(totalPrice);
+                console.log('payment: ', response)
+
+                const options = {
+                    amount: totalPrice * 100,
+                    key_id: 'rzp_test_puuKYzg6YxSPdv',
+                    key_secret: '7JOvaQjaazG8IsopdBS1fGBb',
+                    currency: 'INR',
+                    order_id: orderId,
+                    receipt: 'order_receipt_1',
+                    handler: function (response: any) {
+                        // Handle the response from Razorpay
+                        console.log('response: ', response);
+                        console.log('Payment successful:', response);
+                    },
+                    theme: {
+                        color: '#3399CC',
+                    },
+                };
+                if (Razorpay === undefined) {
+                    console.log('undefind');
+                }
+                const rzp = new (Razorpay as any)(options);
+                console.log(rzp)
+                rzp.open({
+                    handler: function (response: any) {
+                        console.log('after open', rzp)
+                        // Handle the result of the transaction
+                    },
+                    modal: true,
+                });
+            } else {
+                console.error('Error response: ', response);
+            }
+
+
 
         } catch (error) {
             console.log(error);
@@ -96,209 +148,195 @@ const PizzaDetail = () => {
     const redirectToIngredientCreation = () => {
         router.push(`/ingredients/createIngredient?pizzaId=${pizzaDetail._id}`);
     };
-    // const userToken = getCookie("token");
-    // console.log("User Token:", userToken);
+
 
     return (
-        <div className='bg-gray-900 min-h-screen'>
-            <Navbar />
-            {/* {getCookie("role") === 'admin' && (
-                <button
-                    className="bg-blue-500 text-white px-4 py-2 mt-4 rounded-lg hover:bg-blue-600 absolute bottom-4 right-4" // Adjust position as needed
-                    onClick={redirectToIngredientCreation}
-                >
-                    Create Ingredient
-                </button>
-            )} */}
-            <div
-                className="flex flex-col items-center mx-20 bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl  dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-            >
-                <div className="w-full md:w-48">
-                    <img
-                        className="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
-                        src={pizzaDetail.imageUrl}
-                        alt={pizzaDetail.name}
-                    />
-                </div>
-                <div className="flex flex-col justify-between p-4 leading-normal">
-                    <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Name:
-                        {pizzaDetail.name}
-                    </h5>
-                    <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-                        Price: {pizzaDetail.price}
-                    </p>
-                    <div className="rounded-lg p-4">
-                        <h2 className="text-lg font-semibold text-center">Ingredients</h2>
-                        <div className="flex flex-row space-x-4 my-4 ">
-                            {pizzaDetail.ingredient.cheese.map((cheeseId: any) => (
-                                <div key={cheeseId}>
-                                    <div className="w-1/2 md:w-1/4 underline-text">
-                                        {/* Ingredient Title */}
+        <>
+
+            <div className='bg-gray-900 min-h-screen'>
+                <Navbar hideElements={false} />
+
+
+                <div className="flex flex-col items-center mx-auto border border-gray-200 rounded-lg shadow md:flex-row md:max-w-lg dark:border-gray-700 dark:bg-gray-800" style={{ maxWidth: '68%' }}>
+
+                    <div className="w-3/4 h-96">
+                        <img
+                            className="object-cover h-full w-full rounded-lg rounded-r-none"
+                            src={pizzaDetail.image}
+                            alt={pizzaDetail.name}
+                        />
+                    </div>
+                    <div className="flex flex-col justify-between  leading-normal mx-10 ">
+                        {confirmDelete && getCookie("role") === "admin" && (
+                            <Modal onClose={() => setConfirmDelete(false)}>
+                                <div className="flex flex-col items-center">
+                                    <p className="mb-4">Are you sure you want to delete this pizza?</p>
+                                    <div className="flex space-x-4">
+                                        <button className="bg-yellow-600 rounded-lg p-2" onClick={handleConfirmDelete}>
+                                            Yes
+                                        </button>
+                                        <button onClick={handleCancelDelete}>No</button>
+                                    </div>
+                                </div>
+                            </Modal>
+                        )}
+
+                        <h5 className="mb-2 text-2xl font-bold  text-gray-900 dark:text-white">Name: {pizzaDetail.name}
+                        </h5>
+                        <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
+                            Price: {pizzaDetail.price}
+                        </p>
+                        <div className="rounded-lg p-2">
+                            <h5 className="text-lg font-semibold ">Ingredients</h5>
+                            <div className="flex flex-wrap md:grid-cols-2 lg:grid-cols-1">
+                                <div key='cheeseId' className="w-4/12 mb-4 px-2">
+                                    <div className="">
                                         <h3 className="mb-2 text-lg font-semibold text-center">Cheese</h3>
-                                        {/* <hr className="my-2 border-t border-gray-400" /> */}
-
-                                        {/* Ingredient Name and Price */}
-                                        <div className="flex items-center space-x-2">
-
-                                            {getCookie("role") === "user" && (
-                                                <label className="flex items-center space-x-2">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedIngredient.includes(cheeseId)}
-                                                        onChange={() => handleSelection(cheeseId as string)}
-                                                        className="h-6 w-6 rounded-full border border-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-gray-500 appearance-none"
-                                                    />
-                                                    {/* <span>Select</span> */}
-                                                </label>
-                                            )}
-                                            <div className="flex items-center space-x-2"> {/* Flex container */}
-                                                <IngredientDetail id={cheeseId} />
-                                            </div>
-                                        </div>
+                                        <select
+                                            className="bg-gray-100 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                            defaultValue={pizzaDetail.ingredient.cheese[0]} // Set the default cheese
+                                        >
+                                            <option value="">Select Cheese</option>
+                                            {pizzaDetail.ingredient.cheese.map((cheeseId: any) => (
+                                                <option key={cheeseId} value={cheeseId} onChange={(e) => handleSelection(cheeseId as string)}>
+                                                    <IngredientDetail id={cheeseId} />
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
-                                    {/* Separator */}
                                 </div>
-                            ))}
 
-                            {pizzaDetail.ingredient.sauces.map((sauceId: any) => (
-                                <div key={sauceId}>
-                                    <div className="w-1/2 md:w-1/4 underline-text">
-                                        {/* Ingredient Title */}
+                                <div key='sauceId' className="w-4/12 mb-4 px-2">
+                                    <div className="">
                                         <h3 className="mb-2 text-lg font-semibold text-center">Sauce</h3>
-
-                                        {/* Ingredient Name and Price */}
-                                        <div className="flex items-center space-x-2">
-                                            <hr className="my-2 border-t border-gray-400" />
-
-                                            {getCookie("role") === "user" && (
-                                                <label className="flex items-center space-x-2">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedIngredient.includes(sauceId)}
-                                                        onChange={() => handleSelection(sauceId as string)}
-                                                        className="h-6 w-6 rounded-full border border-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-gray-500 appearance-none"
-                                                    />
-                                                    {/* <span>Select</span> */}
-                                                </label>
-                                            )}
-                                            <div className="flex items-center space-x-2"> {/* Flex container */}
-                                                <IngredientDetail id={sauceId} />
-                                            </div>
-                                        </div>
+                                        <select
+                                            className="bg-gray-100 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                            defaultValue={pizzaDetail.ingredient.sauces[0]}
+                                        >
+                                            <option value="">Select Sauce</option>
+                                            {pizzaDetail.ingredient.sauces.map((sauceId: any) => (
+                                                <option key={sauceId} value={sauceId} onChange={() => handleSelection(sauceId)}>
+                                                    <IngredientDetail id={sauceId} />
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
-                                    {/* Separator */}
                                 </div>
-                            ))}
 
-                            {pizzaDetail.ingredient.meat.map((meatId: any) => (
-                                <div key={meatId}>
-                                    <div className="w-1/2 md:w-1/4 underline-text">
-                                        {/* Ingredient Title */}
+                                <div key='meatId' className="w-4/12 mb-4 px-2">
+                                    <div className="">
                                         <h3 className="mb-2 text-lg font-semibold text-center">Meat</h3>
+                                        <select
+                                            className="bg-gray-100 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                            defaultValue={pizzaDetail.ingredient.meat[0]} // Set the default meat
+                                        >
+                                            <option value="">Select Meat</option>
 
-                                        {/* Ingredient Name and Price */}
-                                        <div className="flex items-center space-x-2">
-                                            <hr className="my-2 border-t border-gray-400" />
-
-                                            {getCookie("role") === "user" && (
-                                                <label className="flex items-center space-x-2">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedIngredient.includes(meatId)}
-                                                        onChange={() => handleSelection(meatId as string)}
-                                                        className="h-6 w-6 rounded-full border border-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-gray-500 appearance-none"
-                                                    />
-                                                    {/* <span>Select</span> */}
-                                                </label>
-                                            )}
-                                            <div className="flex items-center space-x-2"> {/* Flex container */}
-                                                <IngredientDetail id={meatId} />
-                                            </div>
-                                        </div>
+                                            {pizzaDetail.ingredient.meat.map((meatId: any) => (
+                                                <option key={meatId} value={meatId} onChange={(e) => handleSelection(meatId as string)}>
+                                                    <IngredientDetail id={meatId} />
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
-                                    {/* Separator */}
                                 </div>
-                            ))}
-                            {pizzaDetail.ingredient.veggies.map((veggiesId: any) => (
-                                <div key={veggiesId}>
-                                    <div className="w-1/2 md:w-1/4 underline-text">
-                                        {/* Ingredient Title */}
+                                <div key='veggiesId' className="w-4/12 mb-4 px-2">
+                                    <div className="">
                                         <h3 className="mb-2 text-lg font-semibold text-center">Veggies</h3>
+                                        <select
+                                            className="bg-gray-100 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
 
-                                        {/* Ingredient Name and Price */}
-                                        <div className="flex items-center space-x-2">
-                                            <hr className="my-2 border-t border-gray-400" />
+                                            defaultValue={pizzaDetail.ingredient.veggies[0]} // Set the default veggies
+                                        >
+                                            <option value="">Select Veggies</option>
 
-                                            {getCookie("role") === "user" && (
-                                                <label className="flex items-center space-x-2">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedIngredient.includes(veggiesId)}
-                                                        onChange={() => handleSelection(veggiesId as string)}
-                                                        className="h-6 w-6 rounded-full border border-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-gray-500 appearance-none"
-                                                    />
-                                                    {/* <span>Select</span> */}
-                                                </label>
-                                            )}
-                                            <div className="flex items-center space-x-2"> {/* Flex container */}
-                                                <IngredientDetail id={veggiesId} />
-                                            </div>
-                                        </div>
+                                            {pizzaDetail.ingredient.veggies.map((veggiesId: any) => (
+                                                <option key={veggiesId} value={veggiesId} onChange={(e) => handleSelection(veggiesId as string)}>
+                                                    <IngredientDetail id={veggiesId} />
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
-                                    {/* Separator */}
                                 </div>
-                            ))}
+
+                            </div>
+
+
+                            {getCookie("role") === 'user' && (
+                                <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-x-2">
+                                    <div className="flex space-x-2 items-center">
+                                        <label className="block">Quantity:</label>
+                                        <input
+                                            className="w-14 text-black border rounded-lg p-1 mt-2"
+                                            type="number"
+                                            value={quantity}
+                                            onChange={(e) => setQuantity(Number(e.target.value))}
+                                        />
+
+
+
+                                    </div>
+
+                                    {getCookie("role") !== "admin" && (
+                                        <button className="bg-yellow-500 text-white px-2 py-2 mx-4 rounded-lg hover:bg-yellow-600" onClick={handleSubmit}>
+                                            Submit Order
+                                        </button>
+                                    )}
+                                    <div className="relative">
+                                        {isOpen && (
+                                            <Modal onClose={() => setIsOpen(false)}>
+                                                <div>
+                                                    <h2 className="text ">Ordered Successfully!</h2>
+                                                    {/* Additional content for the success modal */}
+                                                </div>
+                                            </Modal>
+                                        )}
+                                    </div>
+
+
+
+                                </div>
+                            )}
+
+                            <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-x-4 justify-space-between">
+                                {getCookie("role") === 'admin' && (
+                                    <button
+                                        className="bg-yellow-600 rounded-lg p-1 mx-4 mt-4"
+                                        onClick={redirectToIngredientCreation}
+                                    >
+                                        Create Ingredient
+                                    </button>
+                                )}
+
+                                {getCookie("role") === "admin" && (
+                                    <div className="flex items-center "> {/* Updated */}
+                                        <button className="bg-blue-600 rounded-lg p-1 mx-4">
+                                            <Link className="mx-2 mt-2" href={`/pizza/${id}`}>
+                                                Update Pizza
+                                            </Link>
+                                        </button>
+                                        <button className="bg-red-600 rounded-lg p-1 " onClick={() => handleDelete(pizza._id)}>
+                                            Delete Pizza
+                                        </button>
+
+                                    </div>
+                                )}
+
+
+
+                            </div>
+
+
 
                         </div>
 
 
-                        {getCookie("role") === 'user' && (
-                            <div className="my-4 flex justify-between items-center">
-                                <div className="flex space-x-2 items-center">
-                                    <label className="block">Quantity:</label>
-                                    <input
-                                        className="w-16 text-black border rounded-lg p-2"
-                                        type="number"
-                                        value={quantity}
-                                        onChange={(e) => setQuantity(Number(e.target.value))}
-                                    />
-                                </div>
-
-                            </div>
-                        )}
-
                     </div>
-                    {getCookie("role") !== "admin" && (
-                        <button className="bg-yellow-500 text-white px-4 py-2 mt-4 rounded-lg hover:bg-yellow-600" onClick={handleSubmit}>
-                            Submit Order
-                        </button>
-                    )}
 
                 </div>
-                {getCookie("role") === "admin" && (
-                    <div>
-                        <button className="bg-yellow-600 rounded-lg p-1 mx-4" onClick={() => handleDelete(pizza._id)}>
-                            Delete
-                        </button>
-                        <Link className="mx-2 mt-2" href={`/pizza/${id}`}>
-                            Edit
-                        </Link>
-                    </div>
-
-                )}
-                {confirmDelete && getCookie("role") === "admin" && (
-                    <div>
-                        <p>Are you sure you want to delete this pizza?</p>
-                        <button className="bg-yellow-600 rounded-full" onClick={handleConfirmDelete}>
-                            Yes
-                        </button>
-                        <button onClick={handleCancelDelete}>No</button>
-                    </div>
-                )}
-
             </div>
+        </>
 
-        </div>
     )
 }
 

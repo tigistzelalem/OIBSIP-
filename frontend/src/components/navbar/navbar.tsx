@@ -1,10 +1,17 @@
 import { getCookie } from '@/utlis/cookie';
 import Link from 'next/link'
 import React, { useState } from 'react'
+// import { RootState } from "@/store";
+const initialState = {
+    isAuthenticated: false,
+    hideElements: false
+}
+type NavbarProps = {
+    hideElements: boolean;
+};
 
-const Navbar: React.FC = () => {
+const Navbar: React.FC<NavbarProps> = ({ hideElements }) => {
     const [menuOpen, setMenuOpen] = useState(false);
-
     const toggleMenu = () => {
         setMenuOpen(!menuOpen);
     };
@@ -15,7 +22,8 @@ const Navbar: React.FC = () => {
                 <div className="container mx-auto flex justify-between items-center">
                     <div>
                         <Link href="/" className="text-yellow-700 text-lg font-semibold ">
-                            Delicious Pizza
+                            {/* <img src="/images/PIZZAROO (1).png" alt="logo" className='h-12 w-12' /> */}
+                            PIZZAROO
                         </Link>
                     </div>
 
@@ -43,29 +51,23 @@ const Navbar: React.FC = () => {
 
                     {/* Navigation Links (for larger screens) */}
                     <div className={`hidden md:flex space-x-5`}>
-                        <Link href="/" className="text-white hover:text-gray-300">
+                        {!hideElements && <Link href="/" className="text-white hover:text-gray-300">
                             Home
-                        </Link>
-                        {/* {getCookie("role") === "admin" && (
-                            <Link href="/pizza/createPizza" className="text-white hover:text-gray-300">
+                        </Link>}
+                        {!hideElements && getCookie("role") === "admin" && (
+                            <Link href="/pizza/createPizza" className="text-white  hover:text-gray-300">
                                 AddPizza
                             </Link>
-                        )} */}
+                        )}
 
-                        {/* {getCookie("role") === "admin" && (
-                      <Link href={`/admin/createIngredient/${id}` className="text-white  hover:text-gray-300">
-                          AddIngredient
-                      </Link>
-                      )} */}
-
-                        <Link href="/pizza/pizzas" className="text-white hover:text-gray-300">
+                        {!hideElements && <Link href="/pizza/pizzas" className="text-white hover:text-gray-300">
                             Dashboard
-                        </Link>
+                        </Link>}
                         <Link href="/auth/login" className="text-white hover:text-gray-300">
                             SignIn
                         </Link>
                         <Link href="/auth/register">
-                            <button className="text-white hover:text-gray-300 bg-yellow-600 py-1 px-4 rounded-full">
+                            <button className="text-white hover:text-gray-300 bg-yellow-600 py-1 px-4 rounded-lg">
                                 SignUp
                             </button>
                         </Link>
@@ -73,18 +75,20 @@ const Navbar: React.FC = () => {
 
                     {/* Mobile Dropdown Menu */}
                     {menuOpen && (
-                        <div className="md:hidden bg-gray-900 text-white absolute top-16 right-0 w-48 z-10">
+                        <div className="md:hidden bg-gray-800 text-white absolute top-16 right-0 w-48 z-10 flex flex-col">
                             <Link href="/" className="text-white p-4 hover:text-gray-300">
                                 Home
                             </Link>
+                            
                             {getCookie("role") === "admin" && (
                                 <Link href="/pizza/createPizza" className="text-white p-4 hover:text-gray-300">
                                     AddPizza
                                 </Link>
                             )}
-                            <Link href="/pizza/pizzas" className="text-white p-4 hover:text-gray-300">
+                             <Link href="/pizza/pizzas" className="text-white p-4 hover:text-gray-300">
                                 Dashboard
                             </Link>
+                            
                             <Link href="/auth/login" className="text-white p-4 hover:text-gray-300">
                                 SignIn
                             </Link>

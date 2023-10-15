@@ -9,15 +9,15 @@ export const orderApi = createApi({
     tagTypes: ["Order"],
     baseQuery: fetchBaseQuery({
         baseUrl: BASE_URL,
-        // prepareHeaders: (headers) => {
-        //     const token = getCookie("token");
-        //     if (token) {
-        //         headers.set("authorization", `bearer ${token}`);
-        //     }
+        prepareHeaders: (headers) => {
+            const token = getCookie("token");
+            if (token) {
+                headers.set("authorization", `bearer ${token}`);
+            }
 
-        //     return headers;
+            return headers;
 
-        // }
+        }
     }),
     endpoints: (builder) => ({
         createOrder: builder.mutation<any, any>({
@@ -35,17 +35,17 @@ export const orderApi = createApi({
         }),
 
         getOrders: builder.query<any, void>({
-            query: () => "/admin/getOrders",
+            query: () => "/admin/orders",
             providesTags: ["Order"],
         }),
 
-        // deletePizza: builder.mutation({
-        //     query: (id) => ({
-        //         url: `/pizza/deletePizza/${id}`,
-        //         method: "DELETE",
-        //     }),
-        //     invalidatesTags: ["Pizza"],
-        // }),
+        deleteOrder: builder.mutation<any, string>({
+            query: (_id) => ({
+                url: `/admin/deleteOrder/${_id}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: ["Order"],
+        }),
 
         // updatePizza: builder.mutation<any, Partial<Pizza>>({
         //     query: (pizza) => ({
@@ -60,5 +60,6 @@ export const orderApi = createApi({
 export const {
     useCreateOrderMutation,
     useGetOrdersQuery,
-    useGetOrderQuery
+    useGetOrderQuery,
+    useDeleteOrderMutation
 } = orderApi;

@@ -44,9 +44,9 @@ const CreateIngredient: React.FC<{ pizzaId: string }> = ({ pizzaId }) => {
 
 
     return (
-        <div className="flex justify-center items-center h-screen w-full bg-blue-100">
-            <div className="w-3/4 md:w-1/2 lg:w-1/3 bg-white rounded shadow-2xl p-4 m-1">
-                <h1 className="block w-full text-center text-gray-800 text-2xl font-bold mb-6">
+        <div className="flex justify-center items-center h-screen w-full dark:bg-gray-900">
+            <div className="w-3/4 md:w-1/2 lg:w-1/3 bg-white rounded shadow-2xl p-4 m-1 dark:bg-gray-800">
+                <h1 className="block w-full text-center text-gray-500 text-2xl font-bold mb-6">
                     Create Ingredient
                 </h1>
                 {isError && (
@@ -61,7 +61,7 @@ const CreateIngredient: React.FC<{ pizzaId: string }> = ({ pizzaId }) => {
                             Ingredient Name
                         </label>
                         <input
-                            className="border py-2 px-3 text-black"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             type="text"
                             name="name"
                             id="name"
@@ -78,7 +78,7 @@ const CreateIngredient: React.FC<{ pizzaId: string }> = ({ pizzaId }) => {
                             Ingredient Price
                         </label>
                         <input
-                            className="border py-2 px-3 text-black"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             type="number"
                             name="price"
                             id="price"
@@ -95,7 +95,7 @@ const CreateIngredient: React.FC<{ pizzaId: string }> = ({ pizzaId }) => {
                             Ingredient Type
                         </label>
                         <input
-                            className="border py-2 px-3 text-black"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             type="text"
                             name="ingredientType"
                             id="ingredientType"
@@ -106,7 +106,7 @@ const CreateIngredient: React.FC<{ pizzaId: string }> = ({ pizzaId }) => {
                     </div>
                     {/* Add more input fields for other ingredient properties */}
                     <button
-                        className="block bg-teal-400 hover:bg-teal-600 text-white uppercase text-lg mx-auto p-2 rounded"
+                        className="block bg-yellow-500  text-white uppercase text-lg mx-auto p-2 rounded"
                         type="submit"
                         disabled={isLoading}
                     >

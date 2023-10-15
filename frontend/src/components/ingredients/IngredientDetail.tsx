@@ -15,9 +15,9 @@ const IngredientDetail: React.FC<IngredientDetailProps> = ({ id }) => {
         return <div>Error</div>
     }
     // console.log(ingredient, "#############")
-    console.log(ingredient.message)
+    // console.log(ingredient.message)
     const ingredientDetail = ingredient.ingredient;
-    console.log(ingredientDetail, "******8")
+    // console.log(ingredientDetail, "******8")
 
     return (
         <div>

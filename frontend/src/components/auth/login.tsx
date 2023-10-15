@@ -157,13 +157,11 @@ const Login: React.FC = () => {
                     >
                         {isLoading ? 'Logging in...' : 'Login'}
                     </button>
-                    <p className="text-sm font-light text-gray-500 dark:text-gray-400">
-                        Create account? <a href="/auth/register" className="font-medium text-primary-600 hover:underline dark:text-primary-500">Signup</a>
+                    <p className="flex items-center justify-between text-sm font-light text-gray-500 dark:text-gray-400">
+                        <Link href="/services/forget-password">Forget Password</Link>
+                        <span className="">|</span>
+                        <a href="/auth/register" className="ml-2 font-medium text-primary-600 hover:underline dark:text-primary-500">Create Account</a>
                     </p>
-
-                    <Link href="/services/forget-password">
-                        Forget Password?
-                    </Link>
                 </form>
             </div>
         </div>

@@ -6,6 +6,7 @@ import { ingredientApi } from "./ingredient/ingredients-api";
 import { orderApi } from "./order/order-api";
 import { verifyEmailApi } from "./verification/verify-api";
 import { forgetPasswordApi } from "./service/forget-password-api";
+import { paymentApi } from "./payment/payment-api";
 
 export const store = configureStore({
     reducer: {
@@ -15,7 +16,8 @@ export const store = configureStore({
         [ingredientApi.reducerPath]: ingredientApi.reducer,
         [orderApi.reducerPath]: orderApi.reducer,
         [verifyEmailApi.reducerPath]: verifyEmailApi.reducer,
-        [forgetPasswordApi.reducerPath]: forgetPasswordApi.reducer
+        [forgetPasswordApi.reducerPath]: forgetPasswordApi.reducer,
+        [paymentApi.reducerPath]: paymentApi.reducer
     },
     middleware: (getDefaultMiddleware) => {
         return getDefaultMiddleware().concat(
@@ -24,7 +26,8 @@ export const store = configureStore({
             ingredientApi.middleware,
             orderApi.middleware,
             verifyEmailApi.middleware,
-            forgetPasswordApi.middleware
+            forgetPasswordApi.middleware,
+            paymentApi.middleware
 
         )
     }

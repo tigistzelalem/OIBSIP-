@@ -10,14 +10,14 @@ const authentication = (req, res, next) => {
         const decode = jwt.verify(token, jwt_secret)
         req.userData = decode
         next()
-        res.status(200).json({message: 'auhtorized', decode})
+        // return res.status(200).json({ message: 'auhtorized', decode })
     } catch (error) {
-        res.status(401).json({ message: error.message })
+        return res.status(401).json({ message: error.message })
     }
 }
 
 const authorizeAdmin = (req, res, next) => {
-    const user = req.userData; 
+    const user = req.userData;
     if (user && user.role === 'admin') {
         next();
         console.log('verified')

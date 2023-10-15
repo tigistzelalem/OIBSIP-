@@ -15,14 +15,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-router.get('/getPizza', pizzaController.getPizza)
+router.get('/getPizza', authMiddleware.authentication, pizzaController.getPizza)
 
-router.get('/getPizzaById/:pizzaId', pizzaController.getPizzaById)
+router.get('/getPizzaById/:pizzaId', authMiddleware.authentication, pizzaController.getPizzaById)
 
-router.post('/createPizza', upload.single('image'), pizzaController.createPizza)
+router.post('/createPizza', upload.single('image'), authMiddleware.authentication, pizzaController.createPizza)
 
 router.patch('/updatePizza/:pizzaId', authMiddleware.authentication, authMiddleware.authorizeAdmin, pizzaController.updatePizza)
 
-router.delete('/deletePizza/:pizzaId', authMiddleware.authentication, authMiddleware.authorizeAdmin, pizzaController.deletePizza)
+router.delete('/deletePizza/:pizzaId', authMiddleware.authentication, pizzaController.deletePizza)
 
 module.exports = router

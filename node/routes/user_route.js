@@ -4,11 +4,11 @@ const userController = require('../controllers/user_controllers')
 const orderController = require('../controllers/order_controller')
 const authMiddleware = require('../middleware/auth')
 
-router.get('/verify',  userController.verifyEmail)
+router.get('/verify', userController.verifyEmail)
 
-router.post('/forgetPassword',  userController.forgetPasswordEmail)
+router.post('/forgetPassword', userController.forgetPasswordEmail)
 
-// router.get('/resetPassword', userController.resetPassword)
+router.get('/resetPassword', userController.resetPassword)
 router.post('/resetPassword', userController.resetPassword)
 
 router.post('/register', userController.signup)

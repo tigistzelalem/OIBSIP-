@@ -31,7 +31,7 @@ const Modal: React.FC<ModalProps> = ({ onClose, children }) => {
     return (
         <div>
             {
-                <div className="fixed inset-0 bg-opacity-20 bg-black z-50 flex items-center justify-center">
+                <div className="fixed inset-0 bg-opacity-20 bg-gray-500 rounded-lg z-50 mx-auto my-auto">
                     <div
                         ref={modalRef}
                         className="bg-primarybg m-2 p-4 rounded-lg shadow-lg max-h-[80%] overflow-auto"

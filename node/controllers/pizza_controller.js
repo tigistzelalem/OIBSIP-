@@ -1,15 +1,15 @@
 const Pizza = require('../models/pizza_model')
-
+const cloudinary = require('../middleware/cloudinary')
 
 const getPizza = async (req, res) => {
     try {
         const pizza = await Pizza.find();
         if (!pizza) {
-            res.status(404).json({ message: 'There is no product' })
+            return res.status(404).json({ message: 'There is no product' })
         }
         res.json({ pizza })
     } catch (error) {
-        res.status(500).json({ message: error.message })
+        return res.status(500).json({ message: error.message })
     }
 }
 
@@ -20,7 +20,7 @@ const getPizzaById = async (req, res) => {
     try {
         const pizza = await Pizza.findById(id);
         if (!pizza) {
-            res.status(404).json({ message: 'Product not found' })
+            return res.status(404).json({ message: 'Product not found' })
         }
         res.json({ pizza })
     } catch (error) {
@@ -30,9 +30,17 @@ const getPizzaById = async (req, res) => {
 
 const createPizza = async (req, res) => {
     const { name, price } = req.body;
-    const image = req.file ? req.file.filename : null;
+    // const image = req.file ? req.file.filename : null;
 
     try {
+        await cloudinary.uploader.upload(req.file.path, (err, result) => {
+            if (err) {
+                console.log(err);
+                res.status(500).json({ message: "upload faild" });
+            } else {
+                image = result.secure_url;
+            }
+        });
         const pizza = new Pizza({
             name,
             price,
