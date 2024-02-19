@@ -7,6 +7,7 @@ It allows users to order their favorite pizzas with various ingredients.
 **User Features:**
   - Browse a list of available pizzas.
   - Customize and place orders with various ingredients.
+  - Manage profile
 
 **Admin Features:**
   - Add new pizzas to the menu.
